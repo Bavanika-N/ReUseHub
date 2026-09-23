@@ -5,49 +5,30 @@ require_login();
 $search = trim($_GET['q'] ?? '');
 $category = trim($_GET['category'] ?? '');
 
-$sql = "SELECT items.*, users.name AS owner_name FROM items JOIN users ON items.owner_id = users.user_id WHERE status = 'Available'";
-$params = [];
-$types = "";
-
-if ($search !== '') {
-    $sql .= " AND item_name LIKE ?";
-    $params[] = "%$search%";
-    $types .= "s";
-}
-if ($category !== '') {
-    $sql .= " AND category = ?";
-    $params[] = $category;
-    $types .= "s";
-}
-$sql .= " ORDER BY created_at DESC";
-
+$sql = "SELECT items.*, users.name AS owner_name FROM items JOIN users ON items.owner_id = users.user_id WHERE status = 'Available' ORDER BY created_at DESC";
 $stmt = $conn->prepare($sql);
-if ($params) $stmt->bind_param($types, ...$params);
 $stmt->execute();
 $items = $stmt->get_result();
 
-$cats = $conn->query("SELECT DISTINCT category FROM items ORDER BY category");
+$cats = $conn->query("SELECT DISTINCT category FROM items WHERE status = 'Available' ORDER BY category");
 
 $page_title = "Browse Items";
 include __DIR__ . '/includes/header.php';
 ?>
 
 <div class="browse-top-bar">
-  <form class="browse-search-form" method="GET">
+  <form class="browse-search-form" id="browseSearchForm" method="GET" onsubmit="return false;">
     <div class="search-input-wrap">
       <span class="search-icon">🔍</span>
-      <input type="search" name="q" placeholder="Search items by keyword, name, or description…" value="<?= e($search) ?>">
+      <input type="search" id="browseSearchInput" name="q" placeholder="Type to search items instantly (e.g. books, lab, cycle)…" value="<?= e($search) ?>" autocomplete="off">
+      <button type="button" id="clearSearchBtn" class="btn-clear-search" style="display:<?= $search !== '' ? 'flex' : 'none' ?>;" title="Clear search">✕</button>
     </div>
-    <select name="category" onchange="this.form.submit()">
+    <select name="category" id="browseCategorySelect">
       <option value="">All Categories</option>
       <?php while ($c = $cats->fetch_assoc()): ?>
         <option value="<?= e($c['category']) ?>" <?= $category === $c['category'] ? 'selected' : '' ?>><?= e($c['category']) ?></option>
       <?php endwhile; ?>
     </select>
-    <button type="submit" class="btn btn-primary">Search</button>
-    <?php if ($search !== '' || $category !== ''): ?>
-      <a href="index.php" class="btn btn-ghost" title="Clear search">✕</a>
-    <?php endif; ?>
   </form>
 
   <div class="browse-top-action">
@@ -58,13 +39,18 @@ include __DIR__ . '/includes/header.php';
 <?php if ($items->num_rows === 0): ?>
   <div class="empty-state">
     <div class="icon">📦</div>
-    <h3>No items found</h3>
-    <p>Try a different search, or be the first to post something!</p>
+    <h3>No items available yet</h3>
+    <p>Be the first one to post an item on ReUseHub!</p>
+    <a href="add_item.php" class="btn btn-primary" style="margin-top:10px;">+ Post an Item</a>
   </div>
 <?php else: ?>
-  <div class="grid grid-items">
+  <div class="grid grid-items" id="itemsGrid">
     <?php while ($item = $items->fetch_assoc()): ?>
-      <a href="item.php?id=<?= $item['item_id'] ?>" class="item-card">
+      <a href="item.php?id=<?= $item['item_id'] ?>" class="item-card"
+         data-name="<?= e(strtolower($item['item_name'])) ?>" 
+         data-desc="<?= e(strtolower($item['description'] ?? '')) ?>" 
+         data-cat="<?= e(strtolower($item['category'])) ?>" 
+         data-owner="<?= e(strtolower($item['owner_name'])) ?>">
         <div class="item-thumb">
           <?php if ($item['image']): ?>
             <img src="assets/uploads/<?= e($item['image']) ?>" alt="<?= e($item['item_name']) ?>">
@@ -82,6 +68,14 @@ include __DIR__ . '/includes/header.php';
       </a>
     <?php endwhile; ?>
   </div>
+
+  <div class="empty-state" id="noMatchState" style="display:none; padding:40px 20px;">
+    <div class="icon" style="font-size:2.6rem; margin-bottom:8px;">🔍</div>
+    <h3 style="margin-bottom:6px;">No matching items found</h3>
+    <p style="margin-bottom:14px;">No items match "<span id="searchKeyword" style="color:var(--primary); font-weight:600;"></span>".</p>
+    <button type="button" class="btn btn-ghost" id="resetSearchBtn">✕ Clear Search & Show All Items</button>
+  </div>
 <?php endif; ?>
 
 <?php include __DIR__ . '/includes/footer.php'; ?>
+
