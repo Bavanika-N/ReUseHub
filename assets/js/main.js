@@ -121,4 +121,91 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
   }
+
+  // Live Instant Search & Filtering
+  const searchInput = document.getElementById('browseSearchInput');
+  const catSelect = document.getElementById('browseCategorySelect');
+  const clearBtn = document.getElementById('clearSearchBtn');
+  const resetBtn = document.getElementById('resetSearchBtn');
+  const itemsGrid = document.getElementById('itemsGrid');
+  const noMatchState = document.getElementById('noMatchState');
+  const searchKeyword = document.getElementById('searchKeyword');
+
+  if (searchInput && itemsGrid) {
+    const itemCards = Array.from(itemsGrid.querySelectorAll('.item-card'));
+
+    function performLiveFilter() {
+      const query = (searchInput.value || '').trim().toLowerCase();
+      const selectedCat = (catSelect ? catSelect.value : '').trim().toLowerCase();
+
+      // Show or hide clear button
+      if (clearBtn) {
+        clearBtn.style.display = query.length > 0 ? 'flex' : 'none';
+      }
+
+      let visibleCount = 0;
+
+      itemCards.forEach(function (card) {
+        const name = card.dataset.name || '';
+        const desc = card.dataset.desc || '';
+        const cat = card.dataset.cat || '';
+        const owner = card.dataset.owner || '';
+
+        const matchesQuery = query === '' || 
+          name.includes(query) || 
+          desc.includes(query) || 
+          cat.includes(query) || 
+          owner.includes(query);
+
+        const matchesCat = selectedCat === '' || cat === selectedCat;
+
+        if (matchesQuery && matchesCat) {
+          card.style.display = '';
+          visibleCount++;
+        } else {
+          card.style.display = 'none';
+        }
+      });
+
+      if (noMatchState) {
+        if (visibleCount === 0 && itemCards.length > 0) {
+          noMatchState.style.display = 'block';
+          if (searchKeyword) {
+            searchKeyword.textContent = searchInput.value.trim() || selectedCat;
+          }
+        } else {
+          noMatchState.style.display = 'none';
+        }
+      }
+    }
+
+    // Trigger on typing each relative letter
+    searchInput.addEventListener('input', performLiveFilter);
+    searchInput.addEventListener('search', performLiveFilter);
+
+    // Trigger on category select change
+    if (catSelect) {
+      catSelect.addEventListener('change', performLiveFilter);
+    }
+
+    // Clear search handler - resets input and instantly displays all items
+    function clearSearch() {
+      searchInput.value = '';
+      if (catSelect) catSelect.value = '';
+      performLiveFilter();
+      searchInput.focus();
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', clearSearch);
+    }
+    if (resetBtn) {
+      resetBtn.addEventListener('click', clearSearch);
+    }
+
+    // Run initial filter if value exists on load
+    if (searchInput.value || (catSelect && catSelect.value)) {
+      performLiveFilter();
+    }
+  }
 });
