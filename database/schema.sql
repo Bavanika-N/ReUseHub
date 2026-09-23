@@ -1,10 +1,8 @@
-/* ReUseHub Database Schema */
-/* Requirements Baseline v1.1 (v1.0 + CR-001 Notification System) */
 
 CREATE DATABASE IF NOT EXISTS reusehub CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE reusehub;
 
-/* 15.1 User Information */
+
 CREATE TABLE users (
     user_id INT AUTO_INCREMENT PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
@@ -14,7 +12,7 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
-/* 15.2 Item Information */
+
 CREATE TABLE items (
     item_id INT AUTO_INCREMENT PRIMARY KEY,
     owner_id INT NOT NULL,
@@ -28,7 +26,6 @@ CREATE TABLE items (
     FOREIGN KEY (owner_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-/* 15.2b Additional Item Images (multiple photos per item) */
 CREATE TABLE item_images (
     image_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
@@ -37,7 +34,6 @@ CREATE TABLE item_images (
     FOREIGN KEY (item_id) REFERENCES items(item_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-/* 15.3 Request Information */
 CREATE TABLE requests (
     request_id INT AUTO_INCREMENT PRIMARY KEY,
     item_id INT NOT NULL,
@@ -48,7 +44,6 @@ CREATE TABLE requests (
     FOREIGN KEY (requester_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-/* 23.6 Notification Information (CR-001 / v1.1) */
 CREATE TABLE notifications (
     notification_id INT AUTO_INCREMENT PRIMARY KEY,
     recipient_id INT NOT NULL,
@@ -60,7 +55,5 @@ CREATE TABLE notifications (
     FOREIGN KEY (recipient_id) REFERENCES users(user_id) ON DELETE CASCADE
 ) ENGINE=InnoDB;
 
-/* Default admin account (email: admin@reusehub.com / password: Admin@123) */
 INSERT INTO users (name, email, password, role)
 VALUES ('System Admin', 'admin@reusehub.com', '$2b$10$i1j/rQNNYNai7VOZP3zQn.fLv2KRXWEcsw0oXy89IB5Qvc9ccRB6u', 'admin');
-/* NOTE: the hash above corresponds to "Admin@123" (bcrypt). Change this password after first login. */
