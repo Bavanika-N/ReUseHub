@@ -1,6 +1,5 @@
 <?php
 // ReUseHub Database Configuration
-// Update these values to match your XAMPP / MySQL setup
 
 $DB_HOST = "localhost";
 $DB_USER = "root";
