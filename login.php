@@ -32,7 +32,7 @@ include __DIR__ . '/includes/header.php';
 <div class="auth-wrap">
   <div class="card auth-card">
     <h2>Welcome back</h2>
-    <p class="auth-sub">Log in to browse, post, and request items</p>
+    <!-- <p class="auth-sub">Log in to browse, post, and request items</p> -->
 
     <?php if ($error): ?><div class="alert alert-error"><?= e($error) ?></div><?php endif; ?>
 
